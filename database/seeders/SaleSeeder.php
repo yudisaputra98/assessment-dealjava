@@ -16,26 +16,31 @@ class SaleSeeder extends Seeder
     public function run(): void
     {
         $product_ids = [1,2];
+        $payment_methods = ['OVO','DANA','Shopee Pay','GOPAY'];
+
+        $sale = Sale::create([
+            'total' => 0,
+            'payment_method' => $payment_methods[rand(0,4)],
+        ]);
+
+        $total = 0;
         foreach ($product_ids as $product_id) {
             $product = Product::findOrFail($product_id);
             $variants = ProductVariant::where('product_id', $product_id)->get();
 
             $variantSales = [];
-            $total = $product->price;
+            $total += $product->price;
             foreach ($variants as $variant) {
                 $variantSales[] = ['variants_name' => $variant->name, 'price' => $variant->additional_price];
                 $total += $variant->additional_price;
             }
-
-            $sale = Sale::create([
-                'total_price' => $total,
-                'payment_method' => 'OVO',
-            ]);
 
             $sale->products()->attach($product, [
                 'price' => $product->price,
                 'variants' => json_encode($variantSales)
             ]);
         }
+
+        Sale::findOrFail($sale->id)->update(['total' => $total]);
     }
 }
